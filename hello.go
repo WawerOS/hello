@@ -29,7 +29,7 @@ func clientConn(listener net.Listener) chan net.Conn {
 		i := 0
 		for {
 			client, err := listener.Accept()
-			if client == nil {
+			if err != nil {
 				fmt.Printf("couldn't accept: " + err.Error())
 				continue
 			}
