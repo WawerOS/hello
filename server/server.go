@@ -8,7 +8,8 @@ import (
 	"github.com/Waweros/hello/user"
 )
 
-func ListenForPeople(ln net.Listener) chan user.User {
+// ListenForUsers listens for incoming users
+func ListenForUsers(ln net.Listener) chan user.User {
 	userChan := make(chan user.User)
 
 	go func() {
