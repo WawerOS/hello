@@ -2,88 +2,56 @@ package user
 
 import (
 	"encoding/json"
-	"fmt"
 	"net"
 )
 
 // User is used to keep track of user metadata
 type User struct {
-	Name string
-	recv net.Conn
-	send net.Conn
+	Name     string
+	recv     net.Conn
+	send     net.Conn
+	recvJSON *json.Decoder
+	sendJSON *json.Encoder
 }
 
 // Message gives a message
 type Message struct {
-	sender   User
-	receiver []User
-	message  []byte
+	Sender   string
+	Receiver []string
+	Message  []byte
 }
 
-// New is used to create  new User's
-func New(name string, recv net.Conn, send net.Conn) User {
-	user := User{name, recv, send}
+// NewUser is used to create  new User's
+func NewUser(name string, recv net.Conn, send net.Conn) User {
+	user := User{name, recv, send, json.NewDecoder(recv), json.NewEncoder(send)}
 	return user
 }
 
-// Send send's a message to the User
-func (u *User) Send(msg Message) error {
-	// Making Message into json
-	m, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
-
-	// Sending json
-	n := 0
-	for n != len(m) {
-		n, err = u.send.Write(m)
-
-		if err != nil {
-			return err
+// MatchAndSend sends Message to certain Users
+func MatchAndSend(msg Message, users []User) {
+	for _, u := range users {
+		for _, s := range msg.Receiver {
+			if s == u.Name {
+				u.Send(msg)
+			}
 		}
-
 	}
+}
 
-	return nil
+// Send send's a message to the User
+func (u *User) Send(msg Message) {
+	u.sendJSON.Encode(msg)
 }
 
 // Listen provides a channel of messages
-func (u *User) Listen(msgChan chan Message) error {
-	// Making byte channel
-	byteChan := make(chan []byte)
-	go func(c chan []byte) {
-		buff := make([]byte, 255)
+func (u *User) Listen(msgChan chan Message) {
+
+	go func() {
+		var msg Message
 		for {
-			msgLength, err := u.recv.Read(buff)
-			if err != nil {
-				fmt.Println(err)
-			}
-			c <- buff[0 : msgLength-1]
+			u.recvJSON.Decode(msg)
+			msgChan <- msg
 		}
-	}(byteChan)
-
-	var msgByte []byte
-	var inputBuffer []byte
-	var msg Message
-	var err error
-
-	for {
-		msgByte = <-byteChan
-		for i := 0; i < len(msgByte); i++ {
-
-			if msgByte[i] != 0 {
-				inputBuffer = append(inputBuffer, msgByte[i])
-			} else if msgByte[i] == 0 {
-				err = json.Unmarshal(inputBuffer, &msg)
-				if err != nil {
-					fmt.Println(err)
-				}
-
-				msgChan <- msg
-			}
-		}
-
-	}
+	}()
 
 }
