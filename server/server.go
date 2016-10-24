@@ -1,7 +1,38 @@
 package server
 
-func ListenForPeople() User {
-	var err error
-	var conn Conn
-  var recv 
+import (
+	"encoding/json"
+	"fmt"
+	"net"
+
+	"github.com/Waweros/hello/user"
+)
+
+func ListenForPeople(ln net.Listener) chan user.User {
+	userChan := make(chan user.User)
+
+	go func() {
+		var name string
+		for {
+			recv, err := ln.Accept()
+			if err != nil {
+				fmt.Printf("We couldn't talk because %s", err.Error())
+				continue
+			}
+
+			addr := recv.RemoteAddr()
+			send, err := net.Dial(addr.Network(), addr.String())
+			if err != nil {
+				fmt.Printf("We couldn't talk because %s", err.Error())
+				continue
+			}
+
+			dec := json.NewDecoder(recv)
+			dec.Decode(&name)
+			u := user.NewUser(name, recv, send)
+			userChan <- u
+		}
+	}()
+
+	return userChan
 }
