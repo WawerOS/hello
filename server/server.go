@@ -9,7 +9,7 @@ import (
 )
 
 // ListenForUsers listens for incoming users
-func ListenForUsers(ln net.Listener) chan user.User {
+func ListenForUsers(ln net.Listener) user user.Chan chan user.User {
 	userChan := make(chan user.User)
 
 	go func() {
@@ -34,6 +34,24 @@ func ListenForUsers(ln net.Listener) chan user.User {
 			userChan <- u
 		}
 	}()
+	recv
+	return user.NewUser("Server",) userChan
+}
 
-	return userChan
+// Exit string
+var EXIT []byte = []byte("EXIT")
+
+//UserRespond does things
+func UserRespond(msgChan chan user.Message, userChan chan user.User) {
+	currentUsers := make([]user.User, 0)
+	for {
+		
+		select {
+		case u := <-userChan:
+			append(currentUsers, u)
+		case msg := <-msgChan:
+			user.MatchAndSend(msg, currentUsers
+		}
+
+	}
 }
