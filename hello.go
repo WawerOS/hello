@@ -10,11 +10,12 @@ import (
 func main() {
 
 	fmt.Printf("Server Starting!\n")
-
 	ln, err := net.Listen("tcp", ":8800")
+
 	if err != nil {
 		fmt.Printf("We had a bad thing %s", err)
 	}
+
 	ch := clientConn(ln)
 
 	for {
