@@ -1,55 +1,38 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"net"
-	"os"
+
+	"github.com/Waweros/hello/server"
+	"github.com/Waweros/hello/user"
 )
 
-func main() {
+func serverRun() {
 
 	fmt.Printf("Server Starting!\n")
-	ln, err := net.Listen("tcp", ":8800")
 
+	// creating a listener to listen for new users
+	ln, err := net.Listen("tcp", ":8888")
 	if err != nil {
-		fmt.Printf("We had a bad thing %s", err)
+		fmt.Println(err.Error())
 	}
 
-	ch := clientConn(ln)
+	// Started listening for users
+	us, ch := server.ListenForUsers(ln)
+
+	// Makes a list of currentUsers
+	users := make([]user.User, 1)
+	users[1] = us
 
 	for {
-		go handleConn(<-ch)
+		/*
+			Waits for a new user and when one comes add to the Register
+			and starts to listen to them
+		*/
+		newPerson := <-ch
+		users := append(users, newPerson)
+		go server.UserRespond(newPerson.Listen(), ch, users)
 	}
-}
 
-func clientConn(listener net.Listener) chan net.Conn {
-	ch := make(chan net.Conn)
-
-	go func() {
-		i := 0
-		for {
-			client, err := listener.Accept()
-			if err != nil {
-				fmt.Printf("couldn't accept: " + err.Error())
-				continue
-			}
-			i++
-			fmt.Printf("%d: %v <-> %v\n", i, client.LocalAddr(), client.RemoteAddr())
-			ch <- client
-		}
-	}()
-	return ch
-}
-
-func handleConn(client net.Conn) {
-	them := bufio.NewReader(client)
-	for {
-		line, err := them.ReadBytes('\n')
-		if err != nil { // EOF, or worse
-			break
-		}
-		client.Write(line)
-		os.Stdout.Write(line)
-	}
 }
