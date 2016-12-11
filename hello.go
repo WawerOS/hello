@@ -100,17 +100,27 @@ func serverRun(port int) {
 	us, ch := server.ListenForUsers(ln)
 
 	// Makes a list of currentUsers
-	users := make([]user.User, 1)
-	users[1] = us
-
+	currentUsers := make([]user.User, 1)
+	currentUsers[1] = us
 	for {
 		/*
 			Waits for a new user and when one comes add to the Register
 			and starts to listen to them
 		*/
 		newPerson := <-ch
-		users := append(users, newPerson)
-		go server.UserRespond(newPerson.Listen(), ch, users)
+		currentUsers := append(currentUsers, newPerson)
+
+		// Collecting everyones name
+		usersName := make([]string, 0)
+		for _, u := range currentUsers {
+			usersName = append(usersName, u.Name)
+		}
+
+		// Telling everyone someone new came
+		newMember := user.NewMessage("Server", usersName, "")
+		user.MatchAndSend(newMember, currentUsers)
+
+		go server.UserRespond(newPerson.Listen(), ch, currentUsers)
 	}
 
 }
