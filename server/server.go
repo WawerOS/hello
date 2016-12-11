@@ -54,7 +54,7 @@ func ListenForUsers(ln net.Listener) (user.User, chan user.User) {
 // Exit string
 var EXIT []byte = []byte("EXIT")
 
-//UserRespond does things
+//UserRespond processes messages from a single user
 func UserRespond(msgChan chan user.Message, userChan chan user.User, currentUsers []user.User) {
 	for {
 
