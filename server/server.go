@@ -17,9 +17,11 @@ const (
 func ListenForUsers(ln net.Listener) (user.User, chan user.User) {
 	userChan := make(chan user.User)
 
+	// This function accepts and finds places for all incoming users
 	go func() {
 		var name string
 		for {
+			// Accepting Users
 			recv, err := ln.Accept()
 
 			if err != nil {
@@ -27,6 +29,7 @@ func ListenForUsers(ln net.Listener) (user.User, chan user.User) {
 				continue
 			}
 
+			// Finding out who our guest is
 			addr := recv.RemoteAddr()
 			send, err := net.Dial(addr.Network(), addr.String())
 			if err != nil {
@@ -34,8 +37,11 @@ func ListenForUsers(ln net.Listener) (user.User, chan user.User) {
 				continue
 			}
 
+			// Finding out what they want to be called
 			dec := json.NewDecoder(recv)
 			dec.Decode(&name)
+
+			// Registering them and starting the chat
 			u := user.NewUser(name, recv, send)
 			userChan <- u
 		}
@@ -49,8 +55,7 @@ func ListenForUsers(ln net.Listener) (user.User, chan user.User) {
 var EXIT []byte = []byte("EXIT")
 
 //UserRespond does things
-func UserRespond(msgChan chan user.Message, userChan chan user.User) {
-	currentUsers := make([]user.User, 0)
+func UserRespond(msgChan chan user.Message, userChan chan user.User, currentUsers []user.User) {
 	for {
 
 		select {
