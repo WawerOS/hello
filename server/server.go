@@ -8,14 +8,20 @@ import (
 	"github.com/Waweros/hello/user"
 )
 
+const (
+	SERVER_SEND_PORT string = ":8800"
+	SERVER_RECV_PORT string = ":8880"
+)
+
 // ListenForUsers listens for incoming users
-func ListenForUsers(ln net.Listener) user user.Chan chan user.User {
+func ListenForUsers(ln net.Listener) (user.User, chan user.User) {
 	userChan := make(chan user.User)
 
 	go func() {
 		var name string
 		for {
 			recv, err := ln.Accept()
+
 			if err != nil {
 				fmt.Printf("We couldn't talk because %s", err.Error())
 				continue
@@ -34,8 +40,9 @@ func ListenForUsers(ln net.Listener) user user.Chan chan user.User {
 			userChan <- u
 		}
 	}()
-	recv
-	return user.NewUser("Server",) userChan
+	sendLocal, _ := net.Dial("tcp", SERVER_SEND_PORT)
+	recvLocal, _ := net.Dial("tcp", SERVER_RECV_PORT)
+	return user.NewUser("Server", recvLocal, sendLocal), userChan
 }
 
 // Exit string
@@ -45,12 +52,12 @@ var EXIT []byte = []byte("EXIT")
 func UserRespond(msgChan chan user.Message, userChan chan user.User) {
 	currentUsers := make([]user.User, 0)
 	for {
-		
+
 		select {
 		case u := <-userChan:
-			append(currentUsers, u)
+			currentUsers = append(currentUsers, u)
 		case msg := <-msgChan:
-			user.MatchAndSend(msg, currentUsers
+			user.MatchAndSend(msg, currentUsers)
 		}
 
 	}
