@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 )
 
@@ -21,6 +22,7 @@ type Message struct {
 	Message  []byte
 }
 
+// NewMessage currently makes a new message
 func NewMessage(sender string, receiver []string, message string) Message {
 	msg := Message{sender, receiver, []byte(message)}
 	return msg
@@ -45,7 +47,11 @@ func MatchAndSend(msg Message, users []User) {
 
 // Send send's a message to the User
 func (u *User) Send(msg Message) {
-	u.sendJSON.Encode(msg)
+	err := u.sendJSON.Encode(msg)
+	if err != nil {
+		fmt.Printf("%s at %s GOT a message with error %s", u.Name, u.recv.RemoteAddr(), err.Error())
+	}
+
 }
 
 // Listen provides a channel of messages
@@ -54,7 +60,11 @@ func (u *User) Listen() chan Message {
 	go func() {
 		var msg Message
 		for {
-			u.recvJSON.Decode(msg)
+			err := u.recvJSON.Decode(msg)
+			if err != nil {
+				fmt.Printf("%s at %s SENT a message with error %s", u.Name, u.recv.RemoteAddr(), err.Error())
+			}
+
 			msgChan <- msg
 		}
 	}()
