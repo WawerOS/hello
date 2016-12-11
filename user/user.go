@@ -21,6 +21,11 @@ type Message struct {
 	Message  []byte
 }
 
+func NewMessage(sender string, receiver []string, message string) Message {
+	msg := Message{sender, receiver, []byte(message)}
+	return msg
+}
+
 // NewUser is used to create  new User's
 func NewUser(name string, recv net.Conn, send net.Conn) User {
 	user := User{name, recv, send, json.NewDecoder(recv), json.NewEncoder(send)}
@@ -44,8 +49,8 @@ func (u *User) Send(msg Message) {
 }
 
 // Listen provides a channel of messages
-func (u *User) Listen(msgChan chan Message) {
-
+func (u *User) Listen() chan Message {
+	msgChan := make(chan Message)
 	go func() {
 		var msg Message
 		for {
@@ -54,4 +59,5 @@ func (u *User) Listen(msgChan chan Message) {
 		}
 	}()
 
+	return msgChan
 }
